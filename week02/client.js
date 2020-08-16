@@ -1,5 +1,4 @@
 const net = require('net')
-const { connect } = require('http2')
 
 class Request {
   constructor (options) {
