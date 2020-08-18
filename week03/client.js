@@ -73,6 +73,20 @@ class ResponseParse {
     this.headerParser = null
   }
 
+  get isFinished () {
+    return this.bodyParser && this.bodyParser.isFinished
+  }
+
+  get response () {
+    this.statusLine.match(/HTTP\/1.1 (\d+) (\S+)/)
+    return {
+      statusCode: RegExp.$1,
+      statusText: RegExp.$2,
+      headers: this.headers,
+      body: this.bodyParser.content.join('')
+    }
+  }
+
   receive (string) {
     for (let i = 0; i < string.length; i++) {
       this.receiveChar(string.charAt(i))
@@ -95,7 +109,7 @@ class ResponseParse {
         this.current = this.WAITING_HEADER_SPACE
       } else if (char === '\r') {
         this.current = this.WAITING_HEADER_BLOCK_END
-        if (this.headers['transfer-Encoding'] === 'chunked') {
+        if (this.headers['Transfer-Encoding'] === 'chunked') {
           this.bodyParser = new TrunkedBodyParser()
         }
       } else {
@@ -149,7 +163,7 @@ class TrunkedBodyParser {
         }
         this.current = this.WAITING_LENGTH_LINE_END
       } else {
-        this.length += 16
+        this.length *= 16
         this.length += parseInt(char, 16)
       }
     } else if (this.current === this.WAITING_LENGTH_LINE_END) {
@@ -157,10 +171,12 @@ class TrunkedBodyParser {
         this.current = this.READING_TRUNK
       }
     } else if (this.current === this.READING_TRUNK) {
-      this.content.push(char)
-      this.length--
-      if (this.length === 0) {
-        this.current = this.WAITING_NEW_LINE
+      if(this.length !== 0){ 
+        this.content.push(char);
+      }
+      if(this.content.length === this.length){
+          this.current = this.WAITING_NEW_LINE;
+          this.length = 0; 
       }
     } else if (this.current === this.WAITING_NEW_LINE) {
       if (char === '\r') {

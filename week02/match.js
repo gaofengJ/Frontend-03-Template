@@ -28,7 +28,7 @@ function foundA (c) {
   if (c === 'b') {
     return foundB
   } else {
-    return start(c) // 判断是不是a
+    return start(c) // reConsume
   }
 }
 
@@ -63,3 +63,5 @@ function foundB2 (c) {
     return foundB(c)
   }
 }
+
+console.log(match('abcabx'))

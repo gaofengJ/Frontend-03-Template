@@ -1,11 +1,12 @@
 const http = require('http')
 
 http.createServer((request, response) => {
-  let body = {}
+  let body = []
   request.on('error', err => {
     console.error(err)
   }).on('data', chunk => {
-    body.push(chunk.toString)
+    // body.push(chunk.toString())
+    body.push(Buffer.from(chunk))
   }).on('end', () => {
     body = Buffer.concat(body).toString()
     console.log('body', body)
