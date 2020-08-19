@@ -16,12 +16,12 @@ class Request {
     } else if (this.headers['Content-Type'] === 'application/x-www-form-urlencoded') {
       this.bodyText = Object.keys(this.body).map(key => `${key}=${encodeURIComponent(this.body[key])}`).join('&')
     }
-    this.headers['Content-length'] = this.bodyText.length
+    this.headers['Content-Length'] = this.bodyText.length
   }
 
   send (connection) {
     return new Promise((resolve, reject) => {
-      const parser = new ResponseParse
+      const parser = new ResponseParser
       if (connection) {
         connection.write(this.toString())
       } else {
@@ -33,7 +33,6 @@ class Request {
         })
       }
       connection.on('data', (data) => {
-        console.log(data.toString())
         parser.receive(data.toString())
         if (parser.isFinished) {
           resolve(parser.response)
@@ -47,13 +46,15 @@ class Request {
     })
   }
 
-  toString () {
-    return `${this.method} ${this.path} HTTP/1.1\r${Object.keys(this.headers).map(key => `${key}: ${this.headers[key]}`).join('\r\n')}\r\r${this.bodyText}`
+  toString(){
+    return `${this.method} ${this.path} HTTP/1.1\r
+${Object.keys(this.headers).map(key => `${key}: ${this.headers[key]}`).join('\r\n')}\r
+\r
+${this.bodyText}`
   }
-
 }
 
-class ResponseParse {
+class ResponseParser {
   constructor () {
     this.WAITING_STATUS_LINE = 0
     this.WAITING_STATUS_LINE_END = 1
@@ -109,7 +110,7 @@ class ResponseParse {
       } else if (char === '\r') {
         this.current = this.WAITING_HEADER_BLOCK_END
         if (this.headers['Transfer-Encoding'] === 'chunked') {
-          this.bodyParser = new TrunkedBodyParser()
+          this.bodyParser = new ChunkedBodyParser()
         }
       } else {
         this.headerName += char
@@ -141,11 +142,11 @@ class ResponseParse {
   }
 }
 
-class TrunkedBodyParser {
+class ChunkedBodyParser {
   constructor () {
     this.WAITING_LENGTH = 0
     this.WAITING_LENGTH_LINE_END = 1
-    this.READING_TRUNK = 2
+    this.READING_CHUNK = 2
     this.WAITING_NEW_LINE = 3
     this.WAITING_NEW_LINE_END = 4
     this.length = 0
@@ -155,7 +156,7 @@ class TrunkedBodyParser {
   }
 
   receiveChar (char) {
-    if (this.current === this.WAIT_LENGTH) {
+    if (this.current === this.WAITING_LENGTH) {
       if (char === '\r') {
         if (this.length === 0) {
           this.isFinished = true
@@ -167,9 +168,9 @@ class TrunkedBodyParser {
       }
     } else if (this.current === this.WAITING_LENGTH_LINE_END) {
       if (char === '\n') {
-        this.current = this.READING_TRUNK
+        this.current = this.READING_CHUNK
       }
-    } else if (this.current === this.READING_TRUNK) {
+    } else if (this.current === this.READING_CHUNK) {
       if(this.length !== 0){ 
         this.content.push(char);
       }
@@ -199,11 +200,15 @@ void async function () {
       ['X-Foo2']: 'customed'
     },
     body: {
-      name: 'winter'
+      name: 'gaofeng'
     }
   })
 
-  let response = await request.send()
+  try {
+    let response = await request.send()
 
-  console.log(response)
+    console.log(response)
+  } catch (e) {
+    console.log(e)
+  }
 }()
