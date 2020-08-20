@@ -146,7 +146,7 @@ class ChunkedBodyParser {
   constructor () {
     this.WAITING_LENGTH = 0
     this.WAITING_LENGTH_LINE_END = 1
-    this.READING_CHUNK = 2
+    this.READING_TRUNK = 2
     this.WAITING_NEW_LINE = 3
     this.WAITING_NEW_LINE_END = 4
     this.length = 0
@@ -168,9 +168,9 @@ class ChunkedBodyParser {
       }
     } else if (this.current === this.WAITING_LENGTH_LINE_END) {
       if (char === '\n') {
-        this.current = this.READING_CHUNK
+        this.current = this.READING_TRUNK
       }
-    } else if (this.current === this.READING_CHUNK) {
+    } else if (this.current === this.READING_TRUNK) {
       if(this.length !== 0){ 
         this.content.push(char);
       }
