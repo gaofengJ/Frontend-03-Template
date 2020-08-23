@@ -1,5 +1,7 @@
 const net = require('net')
 const parser = require('./parser.js')
+const images = require('images')
+const render = require('./render.js')
 
 class Request {
   constructor (options) {
@@ -210,4 +212,10 @@ void async function () {
   let dom = parser.parserHTML(response.body)
 
   console.log(dom)
+
+  let viewpoint = images(800, 600)
+
+  render(viewpoint, dom)
+
+  viewpoint.save('viewpoint.jpg')
 }()

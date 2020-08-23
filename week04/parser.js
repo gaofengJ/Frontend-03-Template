@@ -1,4 +1,5 @@
 const css = require('css')
+const layout = require('./layout')
 let currentToken = null // 在html中，不管tag有多复杂，都是当成一个tag处理的
 let currentAttribute = null
 let currentTextNode = null
@@ -214,6 +215,7 @@ function emit (token) {
         // top.children[0]就是那个css的文本节点
         addCSSRules(top.children[0].content)
       }
+      layout(top)
       stack.pop()
     }
     currentTextNode = null
