@@ -277,12 +277,12 @@ function endTagOpen (c) {
 }
 
 function tagName (c) {
-  if (c.match(/^[/t/n/f]$/)) {
+  if (c.match(/^[\t\n\f ]$/)) {
     return attriOrSelfclosing
   } else if (c === '/') {
     return selfClosingStartTag
   } else if (c.match(/^[a-zA-Z]$/)) {
-    currentToken.tagName += c //.toLowerCasea()
+    currentToken.tagName += c //.toLowerCase()
     return tagName
   } else if (c === '>') {
     emit(currentToken)
@@ -297,10 +297,10 @@ function tagName (c) {
 function attriOrSelfclosing (c) {
   if (c === '/') {
     // <img />
-    return selfClosingStartTag;
+    return selfClosingStartTag
   } else {
     // <div class=...
-    return beforeAttributeName(c);
+    return beforeAttributeName(c)
   }
 }
 
@@ -354,7 +354,7 @@ function afterAttributeName (c) {
     currentAttribute = {
       name: '',
       value: ''
-    };
+    }
     return attributeName(c)
   }
 }
@@ -460,7 +460,7 @@ function parserHTML (html) {
   }
   state = state(EOF)
 
-  console.log(stack[0])
+  return stack[0]
 }
 
 module.exports = {
