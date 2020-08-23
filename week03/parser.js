@@ -7,6 +7,7 @@ const EOF = Symbol('EOF') // end of file
 let stack = [{ type: 'document', children: [] }]
 
 let rules = []
+
 function addCSSRules (text) {
   let ast = css.parse(text)
   rules.push(...ast.stylesheet.rules)
@@ -31,20 +32,20 @@ function splitSelector (selector) {
 }
 
 function decide (element, selector) {
-  if (selector.charAt(0) === "#") {
-    let attr = element.attributes.filter(attr => attr.name === "id")[0]
-    if (attr && attr.value === selector.replace("#", "")) {
+  if (selector.charAt(0) === '#') {
+    let attr = element.attributes.filter(attr => attr.name === 'id')[0]
+    if (attr && attr.value === selector.replace('#', '')) {
       return true
     } 
-  } else if (selector.charAt(0) === ".") {
+  } else if (selector.charAt(0) === '.') {
     // 要求实现支持空格的class选择器
     // 遍历 element 的 class
-    let attrs = element.attributes.filter(attr => attr.name === "class")[0]
-    let names = attrs && attrs.value && attrs.value.split(" ")
+    let attrs = element.attributes.filter(attr => attr.name === 'class')[0]
+    let names = attrs && attrs.value && attrs.value.split(' ')
 
     if (names) {
       for (let attr of names) {
-        if (attr === selector.replace(".", "")) {
+        if (attr === selector.replace('.', '')) {
           return true
         }
       }
@@ -57,7 +58,7 @@ function decide (element, selector) {
   return false
 }
 
-function match  (element, selector) {
+function match (element, selector) {
   if (!selector || !element.attributes) {
     // element初始化时都被定义了一个 key为 attribute，值是一个[]
     // 所以可用 element.attributes 来判断是否是一个文本节点
@@ -68,9 +69,7 @@ function match  (element, selector) {
   // 实现复合选择器
   let selectors = splitSelector(selector)
 
-  for (let selector of selectors) {
-    decide(element, selector)
-  }
+  return selectors.every(selector => decide(element, selector))
 }
 
 function computeCSS (element) {
@@ -88,10 +87,10 @@ function computeCSS (element) {
     for (let selector of rule.selectors) {
 
       // if (selector.match(/([\S\s]+)([>|+])([\s\S]+)/)) {
-      //   selector = [RegExp.$1.trim(), RegExp.$2, RegExp.$3.trim()].join("")
+      //   selector = [RegExp.$1.trim(), RegExp.$2, RegExp.$3.trim()].join('')
       // }
 
-      let selectorParts = selector.split(" ").reverse()
+      let selectorParts = selector.split(' ').reverse()
 
       if (!match(element, selectorParts[0])) {
         continue
@@ -113,7 +112,7 @@ function computeCSS (element) {
       }
 
       if (matched) {
-        // console.log("Element", element, "matched rule", rule)
+        // console.log('Element', element, 'matched rule', rule)
         let sp = specificity(rule.selectors[0])
         let computedStyle = element.computedStyle
 
@@ -129,6 +128,7 @@ function computeCSS (element) {
             computedStyle[declaration.property].specificity = sp
           }
         }
+        element.computedStyle = computedStyle
       }
     } 
   }
@@ -137,15 +137,15 @@ function computeCSS (element) {
 // 增加复合选择器的解析部分
 function specificity (selector) {
   let p = [0, 0, 0, 0]
-  let selectorParts = selector.split(" ")
+  let selectorParts = selector.split(' ')
 
   for (let selector of selectorParts) {
     let selectors = splitSelector(selector)
 
     for (let part of selectors) {
-      if (part.charAt(0) === "#") {
+      if (part.charAt(0) === '#') {
         p[1] += 1
-      } else if (part.charAt(0) === ".") {
+      } else if (part.charAt(0) === '.') {
         p[2] += 1
       } else {
         p[3] += 1
@@ -172,7 +172,7 @@ function compare (sp1, sp2) {
 function emit (token) {
   let top = stack[stack.length - 1]
 
-  if (token.type === "startTag") {
+  if (token.type === 'startTag') {
     let element = {
       type: 'element',
       children: [],
@@ -182,7 +182,7 @@ function emit (token) {
     element.tagName = token.tagName
 
     for (let p in token) {
-      if (p !== "type" && p !== "tagName" ) {
+      if (p !== 'type' && p !== 'tagName') {
         element.attributes.push({
           name: p,
           value: token[p]
@@ -204,7 +204,7 @@ function emit (token) {
 
     currentTextNode = null
 
-  } else if (token.type === "endTag") {
+  } else if (token.type === 'endTag') {
     if (top.tagName !== token.tagName) {
       throw new Error('Tag start end doesn\'t match!')
     } else {
@@ -217,11 +217,11 @@ function emit (token) {
       stack.pop()
     }
     currentTextNode = null
-  } else if (token.type === "text") {
+  } else if (token.type === 'text') {
     if (!currentTextNode) {
       currentTextNode = {
-        type: "text",
-        content: "",
+        type: 'text',
+        content: '',
       }
       top.children.push(currentTextNode)
     }
@@ -260,9 +260,25 @@ function tagOpen (c) {
   }
 }
 
+function endTagOpen (c) {
+  if (c.match(/^[a-zA-Z]$/)) {
+    currentToken = {
+      type: 'endTag',
+      tagName: ''
+    }
+    return tagName(c)
+  } else if (c === '>') {
+
+  } else if (c === EOF) {
+
+  } else {
+
+  }
+}
+
 function tagName (c) {
   if (c.match(/^[/t/n/f]$/)) {
-    return beforeAttributeName
+    return attriOrSelfclosing
   } else if (c === '/') {
     return selfClosingStartTag
   } else if (c.match(/^[a-zA-Z]$/)) {
@@ -277,15 +293,30 @@ function tagName (c) {
   }
 }
 
-function beforeAttributeName (c) {
-  if (c.match(/^[\t\n\f]$/) || c === '/' || c === '>' || c === EOF) {
-    return beforeAttributeName
-  } else if (c === '"') {
-    return doubleQuotedAttributeValue
-  } else if (c === '\'') {
-    return singleQuotedAttributeValue
+// selfClosingStartTag 既可以写成 <img/> 也可以写成 <img />
+function attriOrSelfclosing (c) {
+  if (c === '/') {
+    // <img />
+    return selfClosingStartTag;
   } else {
-    return unQuotedAttributeValue(c)
+    // <div class=...
+    return beforeAttributeName(c);
+  }
+}
+
+function beforeAttributeName (c) {
+  if (c.match(/^\s$/)) {
+    return beforeAttributeName
+  } else if (c === '>' || c === '/' || c === EOF) {
+    return afterAttributeName(c)
+  } else if (c === '=') {
+    // throw error
+  } else {
+    currentAttribute = {
+      name: '',
+      value: '',
+    }
+    return attributeName(c)
   }
 }
 
@@ -304,12 +335,36 @@ function attributeName (c) {
   }
 }
 
-function beforeAttributeValue(c) {
+function afterAttributeName (c) {
+  if (c.match(/^[\t\n\f ]$/)) {
+    return afterAttributeName
+  } else if (c === '/') {
+    return selfClosingStartTag
+  } else if (c === '=') {
+    return beforeAttributeValue
+  } else if (c === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  } else if (c === EOF) {
+  } else {
+    // 理论上这条分支是多余的，从beforeAttributeName或者attributeName状态进入时c已经确定了
+    // currentToken[currentAttribute.name] = currentAttribute.value
+    currentToken[currentAttribute.name] = currentAttribute.value
+    currentAttribute = {
+      name: '',
+      value: ''
+    };
+    return attributeName(c)
+  }
+}
+
+function beforeAttributeValue (c) {
   if (c.match(/^[\t\n\f ]$/) || c === '/' || c === '>' || c === EOF) {
     return beforeAttributeValue
   } else if (c === '"') {
     return doubleQuotedAttributeValue
-  } else if (c === "'") {
+  } else if (c === '\'') {
     return singleQuotedAttributeValue
   } else if (c === '>') {
   } else {
@@ -345,25 +400,6 @@ function singleQuotedAttributeValue (c) {
   }
 }
 
-function afterQuotedAttributeValue (c) {
-  if (c.match(/^[\t\n\f]$/)) {
-    return beforeAttributeName
-  } else if (c === '/') {
-    return selfClosingStartTag
-  } else if (c === '>') {
-    currentToken[currentAttribute.name] = currentAttribute.value
-    emit(currentToken)
-    return data
-  } else if (c === EOF) {
-
-  } else {
-    // 可以抛错 例如<div class="a"b>
-    throw new Error('afterQuotedAttributeValue error')
-    // currentAttribute.value += c
-    // return doubleQuotedAttributeValue
-  }
-}
-
 function unQuotedAttributeValue (c) {
   if (c.match(/^[\t\n\f]$/)) {
     currentToken[currentAttribute.name] = currentAttribute.value
@@ -387,6 +423,24 @@ function unQuotedAttributeValue (c) {
   }
 }
 
+function afterQuotedAttributeValue (c) {
+  if (c.match(/^[\t\n\f]$/)) {
+    return beforeAttributeName
+  } else if (c === '/') {
+    return selfClosingStartTag
+  } else if (c === '>') {
+    currentToken[currentAttribute.name] = currentAttribute.value
+    emit(currentToken)
+    return data
+  } else if (c === EOF) {
+
+  } else {
+    // 可以抛错 例如<div class='a'b>
+    // currentAttribute.value += c
+    return beforeAttributeName(c)
+  }
+}
+
 function selfClosingStartTag (c) {
   if (c === '>') {
     currentToken.isSelfClosing = true
@@ -399,52 +453,14 @@ function selfClosingStartTag (c) {
   }
 }
 
-function endTagOpen (c) {
-  if (c.match(/^[a-zA-Z]$/)) {
-    currentToken = {
-      type: 'endTag',
-      tagName: ''
-    }
-    return tagName(c)
-  } else if (c === '>') {
-
-  } else if (c === EOF) {
-
-  } else {
-
-  }
-}
-
-function afterAttributeName (c) {
-  if (c.match(/^[\t\n\f ]$/)) {
-    return afterAttributeName
-  } else if (c === '/') {
-    return selfClosingStartTag
-  } else if (c === '=') {
-    return beforeAttributeValue
-  } else if (c === '>') {
-    currentToken[currentAttribute.name] = currentAttribute.value
-    emit(currentToken)
-    return data
-  } else if (c === EOF) {
-  } else {
-    // 理论上这条分支是多余的，从beforeAttributeName或者attributeName状态进入时c已经确定了
-    // currentToken[currentAttribute.name] = currentAttribute.value
-    currentAttribute = {
-      name: '',
-      value: '',
-    }
-    return attributeName(c)
-  }
-}
-
 function parserHTML (html) {
-  console.log(html)
   let state = data
   for (let c of html) {
     state = state(c)
   }
   state = state(EOF)
+
+  console.log(stack[0])
 }
 
 module.exports = {
