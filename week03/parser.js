@@ -1,86 +1,86 @@
 const css = require('css')
-let currentToken = null
+let currentToken = null // 在html中，不管tag有多复杂，都是当成一个tag处理的
 let currentAttribute = null
 let currentTextNode = null
-const EOF = Symbol('EOF')
+const EOF = Symbol('EOF') // end of file
 
 let stack = [{ type: 'document', children: [] }]
 
-let rules = [];
+let rules = []
 function addCSSRules (text) {
-  let ast = css.parse(text);
-  rules.push(...ast.stylesheet.rules);
+  let ast = css.parse(text)
+  rules.push(...ast.stylesheet.rules)
 }
 
 function splitSelector (selector) {
-  let selectors = [];
+  let selectors = []
 
   function split() {
     if (selector.match(/^[a-zA-Z]+([\.|#][a-zA-Z_-][\w-]+)+$/)) {
-      selectors.push(RegExp.$1);
-      selector = selector.replace(RegExp.$1, '');
-      split(selector);
+      selectors.push(RegExp.$1)
+      selector = selector.replace(RegExp.$1, '')
+      split(selector)
     } else {
-      selectors.push(selector);
+      selectors.push(selector)
     }
   }
   
-  split(selector);
+  split(selector)
 
-  return selectors;
+  return selectors
 }
 
 function decide (element, selector) {
   if (selector.charAt(0) === "#") {
-    let attr = element.attributes.filter(attr => attr.name === "id")[0];
+    let attr = element.attributes.filter(attr => attr.name === "id")[0]
     if (attr && attr.value === selector.replace("#", "")) {
-      return true;
+      return true
     } 
   } else if (selector.charAt(0) === ".") {
-    // 作业：要求实现支持空格的class选择器
+    // 要求实现支持空格的class选择器
     // 遍历 element 的 class
-    let attrs = element.attributes.filter(attr => attr.name === "class")[0];
-    let names = attrs && attrs.value && attrs.value.split(" ");
+    let attrs = element.attributes.filter(attr => attr.name === "class")[0]
+    let names = attrs && attrs.value && attrs.value.split(" ")
 
     if (names) {
       for (let attr of names) {
         if (attr === selector.replace(".", "")) {
-          return true;
+          return true
         }
       }
     }
   } else {
     if (element.tagName === selector) {
-      return true;
+      return true
     }
   }
-  return false;
+  return false
 }
 
-function match(element, selector) {
+function match  (element, selector) {
   if (!selector || !element.attributes) {
-    // element初始化时都被定义了一个key为attribute，值是一个[]
-    // 所以可用element.attributes来判断是否是一个文本节点
-    return false;
+    // element初始化时都被定义了一个 key为 attribute，值是一个[]
+    // 所以可用 element.attributes 来判断是否是一个文本节点
+    return false
   }
 
   // 原先逻辑只有三种简单选择器：元素，class 和 id
-  // 作业：要求实现复合选择器
-  let selectors = splitSelector(selector);
+  // 实现复合选择器
+  let selectors = splitSelector(selector)
 
   for (let selector of selectors) {
-    decide(element, selector);
+    decide(element, selector)
   }
 }
 
 function computeCSS (element) {
-  // 在computeCSS函数中，必须知道元素的所有父元素才能判断元素与规则是否匹配
-  // 从stack可以获得本元素所有的父元素
+  // 在 computeCSS 函数中，必须知道元素的所有父元素才能判断元素与规则是否匹配
+  // 从 stack 可以获得本元素所有的父元素
   // 首先获取的是当前元素，获得和计算父元素匹配的顺序是从内向外
-  let elements = stack.slice().reverse();
+  let elements = stack.slice().reverse()
 
   if (!element.computedStyle) {
-    element.computedStyle = {};
+    element.computedStyle = {}
   }
 
   for (let rule of rules) {
@@ -88,45 +88,45 @@ function computeCSS (element) {
     for (let selector of rule.selectors) {
 
       // if (selector.match(/([\S\s]+)([>|+])([\s\S]+)/)) {
-      //   selector = [RegExp.$1.trim(), RegExp.$2, RegExp.$3.trim()].join("");
+      //   selector = [RegExp.$1.trim(), RegExp.$2, RegExp.$3.trim()].join("")
       // }
 
-      let selectorParts = selector.split(" ").reverse();
+      let selectorParts = selector.split(" ").reverse()
 
       if (!match(element, selectorParts[0])) {
-        continue;
+        continue
       }
 
       // 当且仅当当前元素相同进入后面的代码
-      let matched = false;
+      let matched = false
 
       // 用j来表示当前的选择器的位置
-      let j = 1;
+      let j = 1
       for (let i =0; i < elements.length; i++) {
         if (match(elements[i], selectorParts[j])) {
-          j++;
+          j++
         }
       }
 
       if (j >= selectorParts.length) {
-        matched = true;
+        matched = true
       }
 
       if (matched) {
-        // console.log("Element", element, "matched rule", rule);
+        // console.log("Element", element, "matched rule", rule)
         let sp = specificity(rule.selectors[0])
-        let computedStyle = element.computedStyle;
+        let computedStyle = element.computedStyle
 
         for (let declaration of rule.declarations) {
           if (!computedStyle[declaration.property]) {
-            computedStyle[declaration.property] = {};
+            computedStyle[declaration.property] = {}
           }
           if (!computedStyle[declaration.property].specificity) {
-            computedStyle[declaration.property].value = declaration.value;
-            computedStyle[declaration.property].specificity = sp;
+            computedStyle[declaration.property].value = declaration.value
+            computedStyle[declaration.property].specificity = sp
           } else if (compare(computedStyle[declaration.property].specificity, sp) < 0) {
-            computedStyle[declaration.property].value = declaration.value;
-            computedStyle[declaration.property].specificity = sp;
+            computedStyle[declaration.property].value = declaration.value
+            computedStyle[declaration.property].specificity = sp
           }
         }
       }
@@ -134,26 +134,26 @@ function computeCSS (element) {
   }
 }
 
-// 作业：增加复合选择器的解析部分
+// 增加复合选择器的解析部分
 function specificity (selector) {
-  let p = [0, 0, 0, 0];
-  let selectorParts = selector.split(" "); 
+  let p = [0, 0, 0, 0]
+  let selectorParts = selector.split(" ")
 
   for (let selector of selectorParts) {
-    let selectors = splitSelector(selector);
+    let selectors = splitSelector(selector)
 
     for (let part of selectors) {
       if (part.charAt(0) === "#") {
-        p[1] += 1;
+        p[1] += 1
       } else if (part.charAt(0) === ".") {
-        p[2] += 1;
+        p[2] += 1
       } else {
-        p[3] += 1;
+        p[3] += 1
       }
     }
   }
 
-  return p;
+  return p
 }
 
 function compare (sp1, sp2) {
@@ -166,11 +166,11 @@ function compare (sp1, sp2) {
   if (sp1[2] - sp2[2]) {
     return sp1[2] - sp2[2]
   }
-  return sp1[3] - sp2[3];
+  return sp1[3] - sp2[3]
 }
 
-function emit(token) {
-  let top = stack[stack.length - 1];
+function emit (token) {
+  let top = stack[stack.length - 1]
 
   if (token.type === "startTag") {
     let element = {
@@ -179,53 +179,53 @@ function emit(token) {
       attributes: []
     }
 
-    element.tagName = token.tagName;
+    element.tagName = token.tagName
 
     for (let p in token) {
       if (p !== "type" && p !== "tagName" ) {
         element.attributes.push({
           name: p,
           value: token[p]
-        });
+        })
       }
     }
 
     // 采用一个在startTag的时候去判断哪些标签匹配了css rules的一种方式
-    computeCSS(element);
+    computeCSS(element)
 
     // 把当前元素挂在其父元素上
-    top.children.push(element);
-    element.parent = top;
+    top.children.push(element)
+    element.parent = top
 
     // 自封闭标签存入就要立马从栈里取出，所以不需要push入栈
     if (!token.isSelfClosing) {
-      stack.push(element);
+      stack.push(element)
     }
 
-    currentTextNode = null;
+    currentTextNode = null
 
   } else if (token.type === "endTag") {
     if (top.tagName !== token.tagName) {
-      throw new Error('Tag start end doesn\'t match!');
+      throw new Error('Tag start end doesn\'t match!')
     } else {
       // 在engTag这里如果遇到的是style标签时，就把它的子元素文本节点拿出来，把它的内容作为我们的css的内容。
       // 执行添加CSS规则的操作
       if (top.tagName === 'style') {
         // top.children[0]就是那个css的文本节点
-        addCSSRules(top.children[0].content);
+        addCSSRules(top.children[0].content)
       }
-      stack.pop();
+      stack.pop()
     }
-    currentTextNode = null;
+    currentTextNode = null
   } else if (token.type === "text") {
     if (!currentTextNode) {
       currentTextNode = {
         type: "text",
         content: "",
       }
-      top.children.push(currentTextNode);
+      top.children.push(currentTextNode)
     }
-    currentTextNode.content += token.content;
+    currentTextNode.content += token.content
   }
 }
 
@@ -439,6 +439,7 @@ function afterAttributeName (c) {
 }
 
 function parserHTML (html) {
+  console.log(html)
   let state = data
   for (let c of html) {
     state = state(c)

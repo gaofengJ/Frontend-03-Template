@@ -8,11 +8,19 @@ http.createServer((request, response) => {
   }).on('data', chunk => {
     body.push(chunk.toString)
   }).on('end', () => {
+    console.log(1)
     body = body.join('')
-    console.log('body', body)
+    console.log(2)
     response.writeHead(200, { 'Content-Type': 'text/html' })
-    fs.readFileSync('./index.html')
-    response.end(data)
+    console.log(3)
+    fs.readFile('./index.html', 'utf-8', (err, data) => {
+      console.log(4)
+      if (err) {
+        throw err
+      }
+      console.log(data)
+      response.end(data)
+    })
   })
 }).listen(8088)
 
