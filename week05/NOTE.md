@@ -5,5 +5,5 @@
 ## 作业：为什么 first-letter 可以设置 display: block; float 之类的，而 first-line 不行呢？
 
 ::first-letter是在layout之后，确定了一段文字中的第一个文字之后完成的，操作布局时性能开销较小。
-::first-line在某块级元素的第一行应用样式。第一行的长度取决于很多因素，包括元素宽度，文档宽度和文本的文字大小。所以这里重新排版消耗性能大。
+::first-line在某块级元素的第一行应用样式。第一行的长度取决于很多因素，包括元素宽度，文档宽度和文本的文字大小,重新排版消耗性能大。
 所以first-letter 可以设置 display: block; float 之类的，而 first-line 不行。
