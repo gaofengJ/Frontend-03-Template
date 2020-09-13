@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width='device-width',  initial-scale=1.0'>
+  <title>API分类</title>
+</head>
+<body>
+  
+</body>
+</html>
+<script>
+function filterOut (names,  props) {
+  const set = new Set()
+  props.forEach(o => set.add(o))
+  return names.filter(e => !set.has(e))
+}
+
+let names = Object.getOwnPropertyNames(window)
+
+// ECMA262（过滤JavaScript中规定的属性）
+let js = new Set()
+let objects = ['String',  'Number',  'Boolean',  'undefined',  'Null',  'Object',  'Function',  'globalThis',  'console',  'BigInt',  'BigInt64Array',  'BigUint64Array',  'Infinity',  'NaN',  'eval',  'isFinite',  'isNaN',  'parseFloat',  'parseInt',  'decodeURI',  'decodeURIComponent',  'encodeURI',  'encodeURIComponent',  'Array',  'Date',  'RegExp',  'Promise',  'Proxy',  'Map',  'WeakMap',  'Set',  'WeakSet',  'Symbol',  'Error',  'EvalError',  'RangeError',  'Reference',  'ReferenceError',  'SyntaxError',  'TypeError',  'URIError',  'ArrayBuffer',  'SharedArrayBuffer',  'DateView',  'Float32Array',  'Uint8Array',  'Uint16Array',  'Uint32Array',  'Uint8ClampedArray',  'Atomics',  'JSON',  'Math',  'Refect',  'escape',  'unescape']
+objects.forEach(o => js.add(o))
+names = names.filter(e => !js.has(e))
+
+// Subclass of Node（Node节点）
+names = names.filter(e => {
+  try {
+    return !(window[e].prototype instanceof Node)
+  } catch (e) {
+    return true
+  }
+}).filter(e => e !== 'Node')
+
+// events
+names = names.filter(e => !e.match(/^on/))
+
+// webkit private
+names = names.filter(e => !e.match(/^webkit/))
+
+// http://html.spec.whatwg.org/#window
+let windowProps = new Set()
+objects = ['document',  'frameElement',  'frames',  'fullScreen',  'history',  'indexedDB',  'innerHeight',  'innerWidth',  'isSecureContext',  'isSecureContext',  'length',  'localStorage',  'location',  'locationbar',   'menubar',  'mozAnimationStartTime',  'mozInnerScreenX',  'mozInnerScreenY',  'mozPaintCount',  'name',  'navigator']
+objects.forEach(o => windowprops(o))
+names = names.filter(e => !windowprops.has(e))
+
+// https://html.spec.whatwg.org
+let interfaces = new Set()
+objects = ['ApplicationCache',  'AudioTrack',  'AudioTrackList',  'BarProp',  'BeforeUnloadEvent',  'BroadcastChannel',  'CanvasGradient',  'CanvasPattern',  'CanvasRenderingContext2D',  'CloseEvent',  'CustomElementRegistry',  'DOMStringList',  'DOMStringMap',  'DataTransfer',  'DataTransferItem',  'DataTransferItemList',  'DedicatedWorkerGlobalScope',  'Document',  'DragEvent',  'ErrorEvent',  'EventSource',  'External',  'FormDataEvent',  'HTMLAllCollection',  'HashChangeEvent',  'History',  'ImageBitmap',  'ImageBitmapRenderingContext',  'ImageData',  'Location',  'MediaError',  'MessageChannel',  'MessageEvent',  'MessagePort',  'MimeType',  'MimeTypeArray',  'Navigator',  'OffscreenCanvas',  'OffscreenCanvasRenderingContext2D',   'PageTransitionEvent',   'Path2D',  'Plugin',  'PluginArray',  'PopStateEvent',  'PromiseRejectionEvent',  'RadioNodeList',  'SharedWorker',  'SharedWorkerGlobalScope',  'Storage',  'StorageEvent',  'TextMetrics',  'TextTrack',  'TextTrackCue',  'TextTrackCueList',  'TextTrackList',  'TimeRanges',  'TrackEvent',  'ValidityState',  'VideoTrack',  'VideoTrackList',  'WebSocket',  'Window',  'Worker',  'WorkerGlobalScope',  'WorkerLocation',  'WorkerNavigator']
+
+// http:// 
+
+</script>
