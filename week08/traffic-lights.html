@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>traffic-lights</title>
+  <style>
+    div {
+      background-color: grey;
+      display: inline-block;
+      margin: 30px;
+      width: 100px;
+      height: 100px;
+      border-radius: 50px;
+    }
+    .green.light {
+      background-color: green;
+    }
+    .red.light {
+      background-color: red;
+    }
+    .yellow.light {
+      background-color: yellow;
+    }
+  </style>
+</head>
+<body>
+  <div class='green'></div>
+  <div class='yellow'></div>
+  <div class='red'></div>
+</body>
+</html>
+<script>
+function green (time) {
+  let lights = document.getElementsByTagName('div')
+  for (let i = 0; i < 3; i++) {
+    lights[i].classList.remove('light')
+  }
+  document.getElementsByClassName('green')[0].classList.add('light')
+}
+
+function red (time) {
+  let lights = document.getElementsByTagName('div')
+  for (let i = 0; i < 3; i++) {
+    lights[i].classList.remove('light')
+  }
+  document.getElementsByClassName('red')[0].classList.add('light')
+}
+
+function yellow (time) {
+  let lights = document.getElementsByTagName('div')
+  for (let i = 0; i < 3; i++) {
+    lights[i].classList.remove('light')
+  }
+  document.getElementsByClassName('yellow')[0].classList.add('light')
+}
+
+function wait (time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, time)
+  })
+}
+
+async function interval () {
+  green()
+  await wait(10000)
+  yellow()
+  await wait(2000)
+  red()
+  await wait(5000)
+  interval()
+}
+</script>

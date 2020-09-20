@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TicTacToe游戏</title>
+  <style>
+    .cell {
+      display: inline-block;
+      width: 100px;
+      height: 100px;
+      background-color: green;
+      border: solid 1px white;
+      vertical-align: middle;
+      text-align: center;
+      line-height: 100px;
+      font-size: 50px;
+      color: #FF0000;
+    }
+  </style>
+</head>
+<body>
+  <div id="board"></div>
+</body>
+</html>
+<script>
+function show () {
+  let board = document.getElementById('board')
+
+  board.innerHTML = ''
+
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      let cell = document.createElement('div')
+      cell.classList.add('cell')
+      cell.innerText = pattern[i][j] === 2 ? '×' : pattern[i][j] === 1 ? '〇' : ''
+      cell.addEventListener('click', () => move(j, i))
+      board.append(cell)
+    }
+    board.append(document.createElement('br'))
+  }
+}
+
+function userMove(x, y) {
+  pattern[x * 3 + y] = color
+  if (check(pattern, color)) {
+    alert(color === 2 ? '× is winner' : '〇 is winner')
+  }
+  color = 3 - color
+  show()
+  computerMove()
+}
+
+function computerMove() {
+  let choice = bestChoice(pattern, color)
+  if (choice.point) {
+    pattern[choice.point[0] * 3 + choice.point[1]] = color
+  }
+  if (check(pattern, color)) {
+    alert(color === 2 ? 'X is winner' : 'O is winner')
+  }
+  color = 3 - color
+  show()
+}
+
+function check (pattern, color) {
+  for (let i = 0; i < 3; i++) {
+    let win = true
+    for (let j = 0; j < 3; j++) {
+      if (pattern[i * 3 + j] !== color) {
+        win = false
+      }
+    }
+    if (win) {
+      return true
+    }
+  }
+  for (let i = 0; i < 3; i++) {
+    let win = true
+    for (let j = 0; j < 3; j++) {
+      if (pattern[j * 3 + i] !== color) {
+        win = false
+      }
+    }
+    if (win) {
+      return true
+    }
+  }
+  {
+    let win = true
+    for (let j = 0; j < 3; j++) {
+      if (pattern[i * 3 + i] !== color) {
+        win = false
+      }
+    }
+    if (win) {
+      return true
+    }
+  }
+  {
+    let win = true
+    for (let j = 0; j < 3; j++) {
+      if (pattern[i * 3 + 2 - i] !== color) {
+        win = false
+      }
+    }
+    if (win) {
+      return true
+    }
+  }
+  return false
+}
+
+function clone (pattern) {
+  return Object.create(pattern)
+}
+
+function willWin (pattern, color) {
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      if (pattern[i * 3 + j]) {
+        continue
+      }
+      let tmp = clone(pattern)
+      tmp[i * 3 + j] = color
+      if (check(tmp, color)) {
+        return [i, j]
+      }
+    }
+  }
+  return false
+}
+
+function bestChoice (pattern, color) {
+  let point = willWin(pattern, color)
+  if (point) {
+    return {
+      point: point, // 位置
+      result: 1 // 结果：输，赢，平；-1， + 1，0。
+    }
+  }
+  let result = -1
+  outer: for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      if (pattern[i * 3 + j] !== 0) { // 只检查空的地方，所以不空的话就 continue
+        continue
+      }
+      let tmp = clone(pattern)
+      tmp[i * 3 + j] = color // 模拟走棋，这里先走一步，接下来对方会执行 bestChoice() 来找出最佳/最差
+      let opp = bestChoice(tmp, 3 - color) // 3 - color 表示对方，这里是对方策略的结果
+
+      // opp 是对方最佳选择，-opp 则是对方的最差选择，即是我方最佳选择
+      if (-opp.result >= result) { // - opp
+        point = [i, j]
+        result = -opp.result
+      }
+
+      if(result === 1) {
+        break outer; // break 掉两层循环，即，result 是 1 的话，退出两层循环
+      }
+    }
+  }
+  return {
+    point: point,
+    result: point ? result : 0 // 平是 0
+  }
+}
+
+const pattern = [
+  0, 0, 0,
+  0, 0, 0,
+  0, 0, 0,
+]
+let color = 1
+show()
+
+</script>
