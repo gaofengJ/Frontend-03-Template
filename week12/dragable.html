@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="container">文字 文字 文字 文字 文字 文字 
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+    文字 文字 文字 文字 文字 文字 文字 文字 文字 文字
+  </div>
+  <div id="dragable" style="display: inline-block; width: 100px; height: 100px; background-color: pink;"></div>
+</body>
+</html>
+<script>
+  let dragable = document.getElementById('dragable')
+
+  let baseX = 0 // 记录每次拖拽的初始位置
+  let baseY = 0 // 记录每次拖拽的初始位置
+
+  dragable.addEventListener('mousedown', function (e) {
+    let startX = e.clientX, startY = e.clientY // 记录鼠标起始点，做差值计算transfrom值
+
+    let up = (e) => {
+      baseX = baseX + e.clientX - startX
+      baseY = baseY + e.clientY - startY
+      document.removeEventListener('mousemove', move)
+      document.removeEventListener('mouseup', up)
+    }
+    let move = (e) => {
+      // dragable.style.transform = `translate(${baseX + e.clientX - startX}px, ${baseY + e.clientY - startY}px)`
+      let range = getNearest(e.clientX, e.clientY)
+      range.insertNode(dragable)
+    }
+    // 这里要用document去监听，防止拖拽过快断掉
+    document.addEventListener('mousemove', move) // 在mousedown之后监听，避免多余的执行
+    document.addEventListener('mouseup', up) // 在mousedown之后监听，避免多余的执行
+  })
+
+  let ranges = []
+
+  let container = document.getElementById('container')
+  for (let i = 0; i < container.childNodes[0].textContent.length; i++) {
+    let range = document.createRange() // Range 接口表示一个包含节点与文本节点的一部分的文档片段。
+    range.setStart(container.childNodes[0], i) // range.setStart(startNode, startOffset) startNode：设置Range的起始位置 startOffset：必须为不小于0的整数，表示从startNode的开始位置算起的偏移量
+    range.setEnd(container.childNodes[0], i)
+    ranges.push(range)
+  }
+
+  function getNearest (x, y) {
+    let min = Infinity // 任意一个值都会把Infinity替换掉
+    let nearest = null
+    for (let range of ranges) {
+      let rect = range.getBoundingClientRect()
+      let distance = (rect.x - x) ** 2 + (rect.y - y) ** 2
+      if (distance < min) {
+        nearest = range
+        min = distance
+      }
+    }
+    return nearest
+  }
+
+  document.addEventListener('selectstart', e => e.preventDefault())
+</script>

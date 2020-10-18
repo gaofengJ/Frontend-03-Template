@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <input id="r" type="range" min=0 max=255>
+  <input id="g" type="range" min=0 max=255>
+  <input id="b" type="range" min=0 max=255>
+  <div id="color" style="width: 100px; height: 100px;"></div>
+</body>
+</html>
+<script>
+  /**
+  reactivity：一个半成品的双向绑定，可以负责从数据到dom元素的监听（native的输入到dom元素）
+  */
+  let callbacks = new Map() // 回调函数
+
+  let reactivities = new Map() // 缓存
+
+  let usedReactivties = []
+
+  definePro
+
+  let obj = {
+    r: 1,
+    g: 1,
+    b: 1
+  }
+  let po = reactive(obj)
+
+  effect(() => {
+    document.getElementById('r').value = po.r
+  })
+  effect(() => {
+    document.getElementById('g').value = po.g
+  })
+  effect(() => {
+    document.getElementById('b').value = po.b
+  })
+
+  document.getElementById('r').addEventListener('input', e => po.r = e.target.value)
+  document.getElementById('g').addEventListener('input', e => po.g = e.target.value)
+  document.getElementById('b').addEventListener('input', e => po.b = e.target.value)
+
+  effect(() => { // set的时候执行的函数
+    document.getElementById('color').style.backgroundColor = `rgb(${po.r}, ${po.g}, ${po.b})`
+  })
+
+  function effect (callback) {
+    // callbacks.push(callback)
+    usedReactivties = []
+    callback()
+    console.log(usedReactivties)
+
+    for (let reactivity of usedReactivties) {
+      if (!callbacks.has(reactivity[0])) {
+        callbacks.set(reactivity[0], new Map())
+      }
+      if (!callbacks.get(reactivity[0]).has(reactivity[1])) {
+        callbacks.get(reactivity[0]).set(reactivity[1], [])
+      }
+      callbacks.get(reactivity[0]).get(reactivity[1]).push(callback)
+    }
+  }
+
+  function reactive (obj) {
+    if (reactivities.has(obj)) {
+      return reactivities.get(obj)
+    }
+    // 一般使用Proxy和Promise类似
+    let proxy = new Proxy(obj, {
+      set (obj, prop, val) {
+        obj[prop] = val
+        if (callbacks.get(obj)) {
+          if (callbacks.get(obj).get(prop)) {
+            for (let callback of callbacks.get(obj).get(prop)) {
+              callback()
+            }
+          }
+        }
+        return obj[prop] // 加不加都可以添加成功
+      },
+      get (obj, prop) {
+        usedReactivties.push([obj, prop])
+        if (typeof obj[prop] === 'object') {
+          return reactive(obj[prop])
+        }
+        return obj[prop] // 不加return取不到值
+      }
+    })
+    reactivities.set(obj, proxy)
+    return proxy
+  }
+</script>
