@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/gaofengJ/Frontend-03-Template/issues"
   },
-  "homepage": "https://github.com/gaofengJ/Frontend-03-Template#readme"
+  "homepage": "https://github.com/gaofengJ/Frontend-03-Template#readme",
+  "devDependencies": {}
 }
